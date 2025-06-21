@@ -16,7 +16,7 @@ Many organizations struggle with managing large, diverse datasets and building t
 * Reducing operational overhead by eliminating server management.
 
 ## High-Level Architecture
-[graph TD
+``graph TD
     A[Data Sources] --> B(S3 Raw Data Lake);
     B --> C{Trigger: Lambda/EventBridge};
     C --> D[AWS Glue ETL];
@@ -29,7 +29,7 @@ Many organizations struggle with managing large, diverse datasets and building t
     end
     I -- manages access --> B;
     I -- manages access --> E;
-    I -- manages access --> F;]
+    I -- manages access --> F;``
 
 ## Technologies Used
 
