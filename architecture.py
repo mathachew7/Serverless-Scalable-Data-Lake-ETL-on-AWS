@@ -8,6 +8,7 @@ Deps:
     brew install graphviz
     pip install diagrams
 """
+import base64
 import os
 import re
 from diagrams import Diagram, Cluster, Edge
@@ -98,8 +99,29 @@ with Diagram(
     iam >> Edge(style="dashed", color="#666666") >> glue_job
 
 
-# ── Step 2: Inject CSS animations into the SVG ────────────────────────────────
+# ── Step 2: Embed all local icon PNGs as base64 data URIs ────────────────────
+# The diagrams library writes absolute local paths (e.g. /Users/.../site-packages/...)
+# which don't exist on GitHub or anyone else's machine. This makes the SVG self-contained.
 SVG_FILE = "docs/architecture.svg"
+
+def _embed_images(svg: str) -> str:
+    def _to_data_uri(match: re.Match) -> str:
+        attr, path = match.group(1), match.group(2)
+        local = path[7:] if path.startswith("file://") else path
+        if not os.path.isabs(local) or not os.path.exists(local):
+            return match.group(0)
+        ext  = os.path.splitext(local)[1].lower().lstrip(".")
+        mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg"}.get(ext, "image/png")
+        with open(local, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        return f'{attr}="data:{mime};base64,{b64}"'
+
+    svg = re.sub(r'(xlink:href)="([^"]+)"', _to_data_uri, svg)
+    svg = re.sub(r'\b(href)="([^"]+)"',     _to_data_uri, svg)
+    return svg
+
+
+# ── Step 3: Inject CSS animations into the SVG ────────────────────────────────
 
 CSS = """<style>
   /* ── Background ── */
@@ -165,8 +187,8 @@ CSS = """<style>
 with open(SVG_FILE, "r", encoding="utf-8") as f:
     svg = f.read()
 
-# Inject CSS immediately after the opening <svg ...> tag
-svg = re.sub(r"(<svg\b[^>]*>)", r"\1\n" + CSS, svg, count=1)
+svg = _embed_images(svg)                                          # icons → base64
+svg = re.sub(r"(<svg\b[^>]*>)", r"\1\n" + CSS, svg, count=1)    # inject animations
 
 with open(SVG_FILE, "w", encoding="utf-8") as f:
     f.write(svg)
