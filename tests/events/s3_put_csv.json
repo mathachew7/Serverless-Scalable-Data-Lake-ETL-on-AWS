@@ -1,0 +1,21 @@
+{
+  "Records": [
+    {
+      "eventVersion": "2.1",
+      "eventSource": "aws:s3",
+      "awsRegion": "us-east-1",
+      "eventName": "ObjectCreated:Put",
+      "s3": {
+        "bucket": {
+          "name": "datalake-etl-dev-raw-subash",
+          "arn": "arn:aws:s3:::datalake-etl-dev-raw-subash"
+        },
+        "object": {
+          "key": "uploads/orders.csv",
+          "size": 1024,
+          "eTag": "abc123"
+        }
+      }
+    }
+  ]
+}

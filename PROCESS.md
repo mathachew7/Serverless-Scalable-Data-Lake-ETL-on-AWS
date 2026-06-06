@@ -28,12 +28,14 @@
 
 ## Build Phases
 
-### Phase 1: Raw Ingestion Layer — [ ] IN PROGRESS
-- [ ] S3 buckets (raw, processed, glue-scripts, athena-results)
-- [ ] IAM roles and policies (Lambda, Glue)
-- [ ] Lambda ingestion trigger (Python)
-- [ ] S3 event notification wiring
-- [ ] Sample data (CSV + JSON)
+### Phase 1: Raw Ingestion Layer — [x] COMPLETE ✅
+- [x] S3 buckets (raw, processed, glue-scripts, athena-results)
+- [x] IAM roles and policies (Lambda, Glue)
+- [x] Lambda ingestion trigger (Python) — with file organization to raw/{fmt}/year=/month=/day=/
+- [x] S3 event notification wiring
+- [x] Sample data (CSV + JSON)
+- [x] Unit tests — 14/14 passing
+- [x] Makefile + upload script
 
 ### Phase 2: Serverless ETL — [ ] PENDING
 - [ ] Glue ETL script (PySpark)
