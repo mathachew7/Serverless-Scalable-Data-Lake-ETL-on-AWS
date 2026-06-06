@@ -19,11 +19,11 @@
 > Drop a file → everything else is automatic.
 
 <p align="center">
-  <img src="docs/architecture.svg" alt="AWS Serverless Data Lake ETL — Animated Pipeline Architecture" width="100%">
+  <img src="docs/architecture.png" alt="AWS Serverless Data Lake ETL — Pipeline Architecture" width="100%">
 </p>
 
 <p align="center">
-  <sub>Open <a href="docs/architecture.svg"><code>docs/architecture.svg</code></a> in your browser to see the animated data flow.</sub>
+  <a href="docs/architecture.svg"><strong>▶ Open animated version</strong></a> — drag <code>docs/architecture.svg</code> into your browser to see live data flow animations
 </p>
 
 ---
