@@ -37,10 +37,19 @@ install-dev:
 	pip install -r requirements-dev.txt
 
 test:
+	pytest tests/unit/test_handler.py -v
+
+test-etl:
+	pytest tests/unit/test_transforms.py -v
+
+test-all:
 	pytest tests/unit/ -v
 
 test-cov:
-	pytest tests/unit/ -v --cov=lambda/ingestion_trigger --cov-report=term-missing
+	pytest tests/unit/ -v \
+		--cov=lambda/ingestion_trigger \
+		--cov=glue \
+		--cov-report=term-missing
 
 # ── Terraform ─────────────────────────────────────────────────────────────────
 init:

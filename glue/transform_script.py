@@ -1,12 +1,26 @@
+"""
+AWS Glue ETL entry point.
+All transform logic lives in transforms.py (testable locally).
+"""
+import json
+import logging
 import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
+
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
-from pyspark.sql import functions as F
-from pyspark.sql.types import TimestampType
-import logging
+
+from schemas import SCHEMA_MAP
+from transforms import (
+    add_partition_columns,
+    clean_column_names,
+    deduplicate,
+    drop_all_null_rows,
+    enforce_schema,
+    quality_metrics,
+    split_quarantine,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -23,21 +37,22 @@ args = getResolvedOptions(sys.argv, [
     "--FILE_FORMAT",
 ])
 
-sc = SparkContext()
+sc          = SparkContext()
 glueContext = GlueContext(sc)
-spark = glueContext.spark_session
-job = Job(glueContext)
+spark       = glueContext.spark_session
+job         = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
-INPUT_PATH = f"s3://{args['--INPUT_BUCKET']}/{args['--INPUT_KEY']}"
-OUTPUT_PATH = f"s3://{args['PROCESSED_BUCKET']}/data/"
-FILE_FORMAT = args["--FILE_FORMAT"]
+INPUT_PATH      = f"s3://{args['--INPUT_BUCKET']}/{args['--INPUT_KEY']}"
+PROCESSED_PATH  = f"s3://{args['PROCESSED_BUCKET']}/data/"
+QUARANTINE_PATH = f"s3://{args['PROCESSED_BUCKET']}/quarantine/"
+FILE_FORMAT     = args["--FILE_FORMAT"]
 
-logger.info("Starting ETL | input=%s | format=%s | output=%s", INPUT_PATH, FILE_FORMAT, OUTPUT_PATH)
+logger.info("ETL start | input=%s | format=%s", INPUT_PATH, FILE_FORMAT)
 
 
 # ── Extract ───────────────────────────────────────────────────────────────────
-def read_raw(path: str, fmt: str):
+def _read_raw(path: str, fmt: str):
     if fmt == "csv":
         return spark.read.option("header", "true").option("inferSchema", "true").csv(path)
     if fmt == "json":
@@ -47,69 +62,53 @@ def read_raw(path: str, fmt: str):
     raise ValueError(f"Unsupported format: {fmt}")
 
 
-df_raw = read_raw(INPUT_PATH, FILE_FORMAT)
+df_raw = _read_raw(INPUT_PATH, FILE_FORMAT)
 logger.info("Raw record count: %d", df_raw.count())
 
 
 # ── Transform ─────────────────────────────────────────────────────────────────
-def clean_column_names(df):
-    """Lowercase and snake_case all column names."""
-    renamed = {c: c.strip().lower().replace(" ", "_").replace("-", "_") for c in df.columns}
-    for old, new in renamed.items():
-        if old != new:
-            df = df.withColumnRenamed(old, new)
-    return df
+schema, not_null_cols, positive_cols = SCHEMA_MAP.get(FILE_FORMAT, (None, [], []))
 
-
-def add_partition_columns(df):
-    """Add year/month/day columns for Hive-style partitioning."""
-    if "created_at" in df.columns:
-        ts_col = F.to_timestamp("created_at")
-    elif "timestamp" in df.columns:
-        ts_col = F.to_timestamp("timestamp")
-    elif "date" in df.columns:
-        ts_col = F.to_timestamp("date")
-    else:
-        ts_col = F.current_timestamp()
-
-    return (
-        df
-        .withColumn("_ts", ts_col)
-        .withColumn("year",  F.year("_ts").cast("string"))
-        .withColumn("month", F.lpad(F.month("_ts").cast("string"), 2, "0"))
-        .withColumn("day",   F.lpad(F.dayofmonth("_ts").cast("string"), 2, "0"))
-        .drop("_ts")
-    )
-
-
-def deduplicate(df):
-    return df.dropDuplicates()
-
-
-def drop_nulls_in_key_cols(df):
-    """Drop rows where ALL columns are null."""
-    return df.dropna(how="all")
-
-
-df_clean = (
+df = (
     df_raw
     .transform(clean_column_names)
     .transform(deduplicate)
-    .transform(drop_nulls_in_key_cols)
-    .transform(add_partition_columns)
+    .transform(drop_all_null_rows)
 )
 
-logger.info("Clean record count: %d", df_clean.count())
+if schema:
+    df = enforce_schema(df, schema)
+
+df = add_partition_columns(df)
+
+clean_df, quarantine_df = split_quarantine(df, not_null_cols, positive_cols)
+
+metrics = quality_metrics(df_raw, clean_df, quarantine_df)
+logger.info("Metrics: %s", json.dumps(metrics))
 
 
 # ── Load ──────────────────────────────────────────────────────────────────────
 (
-    df_clean
+    clean_df
     .write
     .mode("append")
     .partitionBy("year", "month", "day")
-    .parquet(OUTPUT_PATH)
+    .parquet(PROCESSED_PATH)
 )
+logger.info("Clean data written to %s", PROCESSED_PATH)
 
-logger.info("ETL complete. Written to %s", OUTPUT_PATH)
+if quarantine_df.count() > 0:
+    (
+        quarantine_df
+        .write
+        .mode("append")
+        .partitionBy("year", "month", "day")
+        .parquet(f"{QUARANTINE_PATH}source={FILE_FORMAT}/")
+    )
+    logger.warning(
+        "%d quarantine rows written to %ssource=%s/",
+        quarantine_df.count(), QUARANTINE_PATH, FILE_FORMAT,
+    )
+
+logger.info("ETL complete")
 job.commit()

@@ -37,12 +37,14 @@
 - [x] Unit tests — 14/14 passing
 - [x] Makefile + upload script
 
-### Phase 2: Serverless ETL — [ ] PENDING
-- [ ] Glue ETL script (PySpark)
-- [ ] Glue Job definition (Terraform)
-- [ ] Data cleansing, type casting, dedup
-- [ ] Parquet output, partitioned by date
-- [ ] Lambda → Glue trigger wiring
+### Phase 2: Serverless ETL — [x] COMPLETE ✅
+- [x] glue/schemas.py — StructType schemas for orders (CSV) + events (JSON)
+- [x] glue/transforms.py — pure PySpark functions, testable locally without AWS
+- [x] glue/transform_script.py — Glue entry point, uses transforms.py
+- [x] Data quality: null checks, positive-value checks, quarantine path for bad rows
+- [x] Schema enforcement: cast types, add missing nullable columns
+- [x] Parquet output partitioned by year/month/day (clean path + quarantine path)
+- [x] 21 PySpark unit tests — 35 total across all phases passing
 
 ### Phase 3: Catalog & Querying — [ ] PENDING
 - [ ] Glue Crawler (Terraform)
