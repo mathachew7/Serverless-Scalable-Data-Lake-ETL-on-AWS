@@ -1,0 +1,8 @@
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is gitignored — never commit real values
+
+aws_region   = "us-east-1"
+project_name = "datalake-etl"
+environment  = "dev"
+owner        = "mathachew7"
+bucket_suffix = "your-unique-suffix"   # e.g. your AWS account alias or initials

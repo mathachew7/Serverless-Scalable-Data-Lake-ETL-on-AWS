@@ -1,0 +1,10 @@
+[
+  {"event_id": "EVT-001", "user_id": "USR-201", "event_type": "page_view", "page": "/home", "session_id": "SES-001", "device": "desktop", "country": "US", "timestamp": "2024-01-15T10:00:00Z"},
+  {"event_id": "EVT-002", "user_id": "USR-201", "event_type": "click", "page": "/products", "session_id": "SES-001", "device": "desktop", "country": "US", "timestamp": "2024-01-15T10:02:30Z"},
+  {"event_id": "EVT-003", "user_id": "USR-202", "event_type": "page_view", "page": "/home", "session_id": "SES-002", "device": "mobile", "country": "UK", "timestamp": "2024-01-15T10:05:00Z"},
+  {"event_id": "EVT-004", "user_id": "USR-203", "event_type": "purchase", "page": "/checkout", "session_id": "SES-003", "device": "desktop", "country": "CA", "timestamp": "2024-01-15T10:10:00Z", "order_id": "ORD-001"},
+  {"event_id": "EVT-005", "user_id": "USR-202", "event_type": "scroll", "page": "/products", "session_id": "SES-002", "device": "mobile", "country": "UK", "timestamp": "2024-01-15T10:07:15Z"},
+  {"event_id": "EVT-006", "user_id": "USR-204", "event_type": "page_view", "page": "/about", "session_id": "SES-004", "device": "tablet", "country": "AU", "timestamp": "2024-01-16T08:30:00Z"},
+  {"event_id": "EVT-007", "user_id": "USR-201", "event_type": "purchase", "page": "/checkout", "session_id": "SES-005", "device": "desktop", "country": "US", "timestamp": "2024-01-16T09:00:00Z", "order_id": "ORD-002"},
+  {"event_id": "EVT-008", "user_id": "USR-205", "event_type": "click", "page": "/products", "session_id": "SES-006", "device": "mobile", "country": "DE", "timestamp": "2024-01-16T11:20:00Z"}
+]
